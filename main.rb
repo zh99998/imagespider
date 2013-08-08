@@ -211,3 +211,4 @@ class Collection
 end
 
 ans = Collection.new.merge
+open('result.json', 'w:UTF-8'){|f|f.write ans.to_json}
