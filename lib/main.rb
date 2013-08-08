@@ -15,8 +15,8 @@ class Collection
       records.MoveNext
       while !records.EOF
       	name = records.Fields.Item("JPCardName").value
-      	name.gsub!("－","−")
-      	name.delete!(" ")
+      	name.delete!("　")
+  	  	name.delete!(" ")
       	name = characters(name)
       	id = records.Fields.Item("CardPass").value
       	@hash_lib[id.to_i] = name
@@ -37,14 +37,6 @@ class Collection
   	  	name.delete!(" ")
   	  	name = characters(name)
   	  	@hash_js[name] = id
-  	  	if (name.index("·") != nil)
-  	  		name.gsub!("·",".")
-  	  		@hash_js[x2] = id
-  	  	end
-  	  	if (name.index("・") != nil)
-  	  		x2 = name.gsub("・","·")
-  	  		@hash_js[x2] = id 
-  	  	end
   	  end
   	  return @hash_js
   end
@@ -127,7 +119,9 @@ class Collection
   	str.gsub!("９","9")
   	str.gsub!("－","−")
   	str.gsub!("．",".")
+  	str.gsub!("·",".")
   	str.gsub!("／","/")
+	str.gsub!("・","·")
   	return str
   end
   def merge()
