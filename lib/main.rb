@@ -9,7 +9,7 @@ class Collection
   def load_lib
  	  require 'win32ole'
   	  conn = WIN32OLE.new('ADODB.Connection')
-      conn.open("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + "YGODAT.DAT" + ";Jet OLEDB:Database Password=paradisefox@sohu.com" )
+      conn.open("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=YGODAT.DAT;Jet OLEDB:Database Password=paradisefox@sohu.com" )
       records = WIN32OLE.new('ADODB.Recordset')
       records.open("YGODATA", conn)
       records.MoveNext
@@ -125,6 +125,9 @@ class Collection
   	str.gsub!("７","7")
   	str.gsub!("８","8")
   	str.gsub!("９","9")
+  	str.gsub!("－","−")
+  	str.gsub!("．",".")
+  	str.gsub!("／","/")
   	return str
   end
   def merge()
