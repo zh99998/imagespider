@@ -149,7 +149,6 @@ class Collection
       id            = a[0]
       name          = a[1]
       name          = characters(name)
-      puts name
       @hash_sql[id] = name
     end
     return @hash_sql
