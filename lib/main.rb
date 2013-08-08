@@ -15,7 +15,8 @@ class Collection
       records.MoveNext
       while !records.EOF
       	name = records.Fields.Item("JPCardName").value
-      	name.delete!("　")
+      	name.gsub!("－","−")
+      	#name.delete!("　")
   	  	name.delete!(" ")
       	name = characters(name)
       	id = records.Fields.Item("CardPass").value
