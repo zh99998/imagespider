@@ -1,5 +1,7 @@
 #encoding: UTF-8
 
+$log = File.open("log.log","w:UTF-8")
+
 class Collection
 
   Alleles = {
@@ -99,6 +101,21 @@ class Collection
 
   }
 
+  Score = 
+  {
+  	"【N】"   => 10,
+  	"【NR】"  => 10,
+  	"【SR】"  => 8,
+  	"【R】"   => 7,
+  	"【NPR】" => 5,
+  	"【GR】"  => 4,
+  	"【UR】"  => 3,
+  	"【UTR】" => 2,
+  	"【SC】"  => 1,
+  	"" => 0,
+  	nil => 0
+  }
+
   attr_reader :hash
 
   def initialize
@@ -130,15 +147,35 @@ class Collection
     require 'json'
     f    = File.open("orenoturn.json", "r:UTF-8")
     data = JSON.parse(f.read)
+    marks = {}    # 罕贵得分
     f.close
     for h in data
       next if h['orenoturn_image_basename'][0,11] == 'noimage.jpg'
       id             = h["orenoturn_id"]
       name           = h["orenoturn_name"]
+      exps           = /【.+?】/.match(name)
+      exps           = exps.to_s
       name           = name.split(/【.+?】/)[0]
       name           = characters(name)
-      @hash_js[name] = id
+
+      #$log.write("#{name} 的罕贵为 #{exps}，得分为#{Score[exps]}\n" )
+      mark           = Score[exps]   # 得分判定
+      mark           = 0 if mark == nil
+      if marks[name] != nil          # 若此项业已存在
+      	if mark > marks[name]          # 得分高者替换
+      		$log.write("进行了罕贵替换： #{name} 被替换成了罕贵：#{exps}\n")
+      		marks[name]    = mark
+      		@hash_js[name] = id
+      	else                         # 得分低者忽略
+      	end
+      else
+     	 @hash_js[name] = id
+     	 marks[name] = mark
+      end
     end
+    #for key in marks.keys
+    #	$log.write("#{key}最终的罕贵为#{marks[key]}\n")
+    #end
     return @hash_js
   end
 
@@ -186,27 +223,21 @@ class Collection
     end
 
     sub = @hash_js.keys - (@hash_lib.values - libs) - (@hash_sql.values - sqls)
-    f   = File.open("lib.txt", "w")
     str = "以下在数据库中的卡片未被索引到（合计#{libs.size}）：\n"
     for t in libs
       str += t + "\n"
     end
-    f.write(str)
-    f.close()
-    f   = File.open("sql.txt", "w")
+    $log.write(str)
     str = "以下在SQL中的卡片未被索引到（合计#{sqls.size}）：\n"
     for t in sqls
       str += t + "\n"
     end
-    f.write(str)
-    f.close()
-    f   = File.open("json.txt", "w")
+    $log.write(str)
     str = "以下在json上的卡片未被索引到（合计#{sub.size}）：\n"
     for t in sub
       str += t + "\n"
     end
-    f.write(str)
-    f.close()
+    $log.write(str)
     return @ans
   end
 
@@ -239,7 +270,8 @@ class Collection
     for x in noimages
     	str += id2name[x] + "\n"
     end
-    File.open("FailsID.txt","w:UTF-8") {|f| f.write("以下在数据库中的卡片未被链接至图像（合计#{noimages.size}）：\n"); f.write(str); f.close()}
+    $log.write("以下在数据库中的卡片未被链接至图像（合计#{noimages.size}）：\n"); 
+    $log.write(str)
     return id2pic
   end
 end
@@ -249,3 +281,4 @@ ans = collection.merge
 open('result.json', 'w:UTF-8'){|f|f.write ans.to_json}
 lib = collection.check_lib
 open('lib.json', 'w:UTF-8') {|f|f.write lib.to_json}
+$log.close
