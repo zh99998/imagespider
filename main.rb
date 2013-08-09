@@ -106,6 +106,7 @@ class Collection
     @hash_sql = {}
     @hash_js  = {}
     @replace  = {}
+    @ans      = {}
   end
 
   def load_lib
@@ -164,7 +165,7 @@ class Collection
     load_lib
     load_js
     load_sql
-    ans  = {}
+    @ans  = {}
     libs = []
     sqls = []
     for n1 in @hash_lib.keys
@@ -172,7 +173,7 @@ class Collection
       if (x == nil)
         libs.push @hash_lib[n1]
       else
-        ans[n1] = x
+        @ans[n1] = x
       end
     end
     for n1 in @hash_sql.keys
@@ -180,7 +181,7 @@ class Collection
       if (x == nil)
         sqls.push @hash_sql[n1]
       else
-        ans[n1] = x
+        @ans[n1] = x
       end
     end
 
@@ -206,9 +207,45 @@ class Collection
     end
     f.write(str)
     f.close()
-    return ans
+    return @ans
+  end
+
+  def check_lib()
+    require 'win32ole'
+    conn = WIN32OLE.new('ADODB.Connection')
+    conn.open("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=YGODAT.DAT;Jet OLEDB:Database Password=paradisefox@sohu.com")
+    records = WIN32OLE.new('ADODB.Recordset')
+    records.open("YGODATA", conn)
+    records.MoveNext
+    id2pas = {}
+    id2name = {}
+    while !records.EOF
+      id                 = records.Fields.Item("CardID").value.to_i
+      pas                = records.Fields.Item("CardPass").value.to_i
+      name               = records.Fields.Item("SCCardName").value.to_s
+      id2pas[id] = pas
+      id2name[id] = name
+      records.MoveNext
+    end
+    id2pic = {}
+    noimages = []
+    for key in id2pas.keys
+      pic = @ans[id2pas[key]]
+      if pic != nil then id2pic[key] = pic   # 不能一行的 Ruby 逼我用了 then
+      else noimages.push key
+      end
+    end
+    str = ""                                  # 我遇到了一个奇怪的编码问题 所以 str 写到后面去了
+    for x in noimages
+    	str += id2name[x] + "\n"
+    end
+    File.open("FailsID.txt","w:UTF-8") {|f| f.write("以下在数据库中的卡片未被链接至图像（合计#{noimages.size}）：\n"); f.write(str); f.close()}
+    return id2pic
   end
 end
 
-ans = Collection.new.merge
+collection = Collection.new
+ans = collection.merge
 open('result.json', 'w:UTF-8'){|f|f.write ans.to_json}
+lib = collection.check_lib
+open('lib.json', 'w:UTF-8') {|f|f.write lib.to_json}
